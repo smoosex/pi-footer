@@ -85,12 +85,9 @@ export interface StatusLineSegmentOptions {
   time?: { format?: "12h" | "24h"; showSeconds?: boolean };
 }
 
-export type CustomItemPosition = "left" | "right" | "secondary";
-
 export interface CustomStatusItem {
   id: string;
   statusKey: string;
-  position: CustomItemPosition;
   color?: ColorValue;
   prefix?: string;
   hideWhenMissing: boolean;
@@ -99,10 +96,7 @@ export interface CustomStatusItem {
 
 // Preset definition
 export interface PresetDef {
-  leftSegments: BuiltinStatusLineSegmentId[];
-  rightSegments: BuiltinStatusLineSegmentId[];
-  /** Secondary row segments (shown in footer, above sub bar) */
-  secondarySegments?: BuiltinStatusLineSegmentId[];
+  segments: BuiltinStatusLineSegmentId[];
   separator: StatusLineSeparatorStyle;
   segmentOptions?: StatusLineSegmentOptions;
   /** Color scheme for this preset */
@@ -165,6 +159,7 @@ export interface SegmentContext {
   extensionStatuses: ReadonlyMap<string, string>;
   hiddenExtensionStatusKeys: ReadonlySet<string>;
   customItemsById: ReadonlyMap<string, CustomStatusItem>;
+  footerSegments?: StatusLineSegmentId[];
   
   // Options
   options: StatusLineSegmentOptions;

@@ -15,7 +15,7 @@ import type { ColorScheme, SegmentContext, StatusLinePreset, StatusLineSegmentId
 import type { FooterConfig } from "./footer-config.ts";
 import {
   collectHiddenExtensionStatusKeys,
-  mergeSegmentsWithCustomItems,
+  resolveFooterSegments,
   nextFooterSettingWithPreset,
   parseFooterConfig,
 } from "./footer-config.ts";
@@ -232,14 +232,11 @@ function computeResponsiveLayout(
   presetDef: ReturnType<typeof getPreset>,
   availableWidth: number,
   customItems: FooterConfig["customItems"]
-): { topContent: string; secondaryContent: string } {
+): { topContent: string; overflowContent: string } {
   const separatorDef = getSeparator(presetDef.separator);
   const sepWidth = visibleWidth(separatorDef.left) + 2;
 
-  const mergedSegments = mergeSegmentsWithCustomItems(presetDef, customItems);
-  const primaryIds = [...mergedSegments.leftSegments, ...mergedSegments.rightSegments];
-  const secondaryIds = mergedSegments.secondarySegments;
-  const allSegmentIds = [...primaryIds, ...secondaryIds];
+  const allSegmentIds = resolveFooterSegments(presetDef, customItems, ctx.footerSegments);
 
   const renderedSegments: { content: string; width: number }[] = [];
   for (const segId of allSegmentIds) {
@@ -250,7 +247,7 @@ function computeResponsiveLayout(
   }
 
   if (renderedSegments.length === 0) {
-    return { topContent: "", secondaryContent: "" };
+    return { topContent: "", overflowContent: "" };
   }
 
   const baseOverhead = 2;
@@ -270,13 +267,13 @@ function computeResponsiveLayout(
     }
   }
 
-  let secondaryWidth = baseOverhead;
-  let secondarySegments: string[] = [];
+  let overflowWidth = baseOverhead;
+  let overflowLineSegments: string[] = [];
   for (const seg of overflowSegments) {
-    const neededWidth = seg.width + (secondarySegments.length > 0 ? sepWidth : 0);
-    if (secondaryWidth + neededWidth <= availableWidth) {
-      secondarySegments.push(seg.content);
-      secondaryWidth += neededWidth;
+    const neededWidth = seg.width + (overflowLineSegments.length > 0 ? sepWidth : 0);
+    if (overflowWidth + neededWidth <= availableWidth) {
+      overflowLineSegments.push(seg.content);
+      overflowWidth += neededWidth;
     } else {
       break;
     }
@@ -284,7 +281,7 @@ function computeResponsiveLayout(
 
   return {
     topContent: buildContentFromParts(topSegments, presetDef, ctx.theme, ctx.colors),
-    secondaryContent: buildContentFromParts(secondarySegments, presetDef, ctx.theme, ctx.colors),
+    overflowContent: buildContentFromParts(overflowLineSegments, presetDef, ctx.theme, ctx.colors),
   };
 }
 
@@ -351,7 +348,7 @@ export default function footerExtension(pi: ExtensionAPI) {
 
   // Layout cache
   let lastLayoutWidth = 0;
-  let lastLayoutResult: { topContent: string; secondaryContent: string } | null = null;
+  let lastLayoutResult: { topContent: string; overflowContent: string } | null = null;
   let lastLayoutTimestamp = 0;
   let layoutDirty = true;
   let forceNextLayoutRecompute = false;
@@ -518,13 +515,14 @@ export default function footerExtension(pi: ExtensionAPI) {
       extensionStatuses,
       hiddenExtensionStatusKeys,
       customItemsById,
+      footerSegments: config.segments,
       options: presetDef.segmentOptions ?? {},
       theme,
       colors,
     };
   }
 
-  function getResponsiveLayout(width: number, theme: Theme): { topContent: string; secondaryContent: string } {
+  function getResponsiveLayout(width: number, theme: Theme): { topContent: string; overflowContent: string } {
     const now = Date.now();
     const cacheTtl = isStreaming ? STREAMING_LAYOUT_CACHE_TTL_MS : LAYOUT_CACHE_TTL_MS;
 
@@ -590,8 +588,8 @@ export default function footerExtension(pi: ExtensionAPI) {
             lines.push(layout.topContent);
           }
 
-          if (layout.secondaryContent) {
-            lines.push(layout.secondaryContent);
+          if (layout.overflowContent) {
+            lines.push(layout.overflowContent);
           }
 
           return lines;

@@ -1,10 +1,42 @@
 import { visibleWidth } from "@earendil-works/pi-tui";
-import type { ColorValue, CustomItemPosition, CustomStatusItem, PresetDef, StatusLinePreset, StatusLineSegmentId } from "./types.ts";
+import type {
+  BuiltinStatusLineSegmentId,
+  ColorValue,
+  CustomStatusItem,
+  PresetDef,
+  StatusLinePreset,
+  StatusLineSegmentId,
+} from "./types.ts";
 
 export interface FooterConfig {
   preset: StatusLinePreset;
   customItems: CustomStatusItem[];
+  segments?: StatusLineSegmentId[];
 }
+
+const BUILTIN_SEGMENT_IDS: readonly BuiltinStatusLineSegmentId[] = [
+  "model",
+  "shell_mode",
+  "path",
+  "git",
+  "subagents",
+  "token_in",
+  "token_out",
+  "token_total",
+  "cost",
+  "context_pct",
+  "context_total",
+  "time_spent",
+  "time",
+  "session",
+  "hostname",
+  "cache_read",
+  "cache_write",
+  "thinking",
+  "extension_statuses",
+];
+
+const BUILTIN_SEGMENT_ID_SET = new Set<string>(BUILTIN_SEGMENT_IDS);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -21,11 +53,6 @@ function normalizeCustomItemId(value: unknown): string | null {
   const normalized = value.trim();
   if (!normalized) return null;
   return /^[a-zA-Z0-9_-]+$/.test(normalized) ? normalized : null;
-}
-
-function normalizeCustomItemPosition(value: unknown): CustomItemPosition {
-  if (value === "left" || value === "right" || value === "secondary") return value;
-  return "right";
 }
 
 function normalizeCustomColor(value: unknown): ColorValue | undefined {
@@ -50,12 +77,28 @@ function normalizeCustomStatusItem(raw: unknown, idOverride?: string): CustomSta
   return {
     id,
     statusKey,
-    position: normalizeCustomItemPosition(raw.position),
     color: normalizeCustomColor(raw.color),
     prefix: normalizeCustomPrefix(raw.prefix),
     hideWhenMissing: raw.hideWhenMissing !== false,
     excludeFromExtensionStatuses: raw.excludeFromExtensionStatuses !== false,
   };
+}
+
+function normalizeSegmentList(raw: unknown): StatusLineSegmentId[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+
+  const normalized: StatusLineSegmentId[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== "string") continue;
+    const segmentId = entry.trim();
+    if (!segmentId) continue;
+
+    if (BUILTIN_SEGMENT_ID_SET.has(segmentId) || /^custom:[a-zA-Z0-9_-]+$/.test(segmentId)) {
+      normalized.push(segmentId as StatusLineSegmentId);
+    }
+  }
+
+  return normalized;
 }
 
 function normalizeCustomItems(raw: unknown): CustomStatusItem[] {
@@ -92,26 +135,23 @@ export function parseFooterConfig(value: unknown, presets: readonly StatusLinePr
   return {
     preset: normalizePreset(value.preset, presets) ?? defaultConfig.preset,
     customItems: normalizeCustomItems(value.customItems),
+    segments: normalizeSegmentList(value.segments),
   };
 }
 
-export function mergeSegmentsWithCustomItems(presetDef: PresetDef, customItems: readonly CustomStatusItem[]): {
-  leftSegments: StatusLineSegmentId[];
-  rightSegments: StatusLineSegmentId[];
-  secondarySegments: StatusLineSegmentId[];
-} {
-  const left: StatusLineSegmentId[] = [...presetDef.leftSegments];
-  const right: StatusLineSegmentId[] = [...presetDef.rightSegments];
-  const secondary: StatusLineSegmentId[] = [...(presetDef.secondarySegments ?? [])];
+export function resolveFooterSegments(
+  presetDef: PresetDef,
+  customItems: readonly CustomStatusItem[],
+  configuredSegments?: readonly StatusLineSegmentId[]
+): StatusLineSegmentId[] {
+  if (configuredSegments) return [...configuredSegments];
 
+  const segments: StatusLineSegmentId[] = [...presetDef.segments];
   for (const item of customItems) {
-    const segmentId: StatusLineSegmentId = `custom:${item.id}`;
-    if (item.position === "left") left.push(segmentId);
-    else if (item.position === "secondary") secondary.push(segmentId);
-    else right.push(segmentId);
+    segments.push(`custom:${item.id}`);
   }
 
-  return { leftSegments: left, rightSegments: right, secondarySegments: secondary };
+  return segments;
 }
 
 export function nextFooterSettingWithPreset(existingFooterSetting: unknown, preset: StatusLinePreset): unknown {
