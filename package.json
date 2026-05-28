@@ -1,0 +1,36 @@
+{
+  "name": "pi-footer",
+  "version": "0.1.0",
+  "description": "Premium status bar extension for pi coding agent",
+  "type": "module",
+  "files": [
+    "*.ts",
+    "*.md",
+    "*.json"
+  ],
+  "keywords": [
+    "pi-package",
+    "pi",
+    "coding-agent",
+    "footer",
+    "status-bar",
+    "extension"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "^0.74.0",
+    "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@earendil-works/pi-tui": "^0.74.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "^0.74.0",
+    "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@earendil-works/pi-tui": "^0.74.0"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
