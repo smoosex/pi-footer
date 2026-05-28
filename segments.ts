@@ -1,6 +1,5 @@
 import { hostname as osHostname } from "node:os";
 import { basename } from "node:path";
-import { visibleWidth } from "@earendil-works/pi-tui";
 import type { BuiltinStatusLineSegmentId, RenderedSegment, SegmentContext, SemanticColor, StatusLineSegment, StatusLineSegmentId } from "./types.ts";
 import { normalizeCompactExtensionStatus, normalizeExtensionStatusValue } from "./footer-config.ts";
 import { fg, rainbow, applyColor } from "./theme.ts";
@@ -475,9 +474,21 @@ function renderCustomSegment(id: `custom:${string}`, ctx: SegmentContext): Rende
   return { content, visible: true };
 }
 
+function isCustomSegmentId(id: StatusLineSegmentId): id is `custom:${string}` {
+  return id.startsWith("custom:");
+}
+
+function isBuiltinSegmentId(id: StatusLineSegmentId): id is BuiltinStatusLineSegmentId {
+  return !isCustomSegmentId(id);
+}
+
 export function renderSegment(id: StatusLineSegmentId, ctx: SegmentContext): RenderedSegment {
-  if (id.startsWith("custom:")) {
+  if (isCustomSegmentId(id)) {
     return renderCustomSegment(id, ctx);
+  }
+
+  if (!isBuiltinSegmentId(id)) {
+    return { content: "", visible: false };
   }
 
   const segment = SEGMENTS[id];

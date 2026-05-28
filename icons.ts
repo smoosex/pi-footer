@@ -98,10 +98,11 @@ function sanitizeUserIconOverrides(value: unknown): PartialIconSet {
     return {};
   }
 
+  const rawIcons = value as Record<keyof IconSet, unknown>;
   const sanitized: PartialIconSet = {};
   const validKeys = Object.keys(NERD_ICONS) as Array<keyof IconSet>;
   for (const key of validKeys) {
-    const icon = value[key];
+    const icon = rawIcons[key];
     if (typeof icon === "string") {
       sanitized[key] = icon;
     }

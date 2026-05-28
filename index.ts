@@ -44,6 +44,13 @@ interface InternalFooterDataProvider extends ReadonlyFooterDataProvider {
   clearExtensionStatuses(): void;
 }
 
+interface ExtensionContextRuntimeCompat extends ExtensionContext {
+  settingsManager?: {
+    getCompactionSettings?: () => { enabled?: boolean } | undefined;
+  };
+  getThinkingLevel?: () => string;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
 // ═══════════════════════════════════════════════════════════════════════════
@@ -503,7 +510,7 @@ export default function footerExtension(pi: ExtensionAPI) {
       usageStats: { input, output, cacheRead, cacheWrite, cost },
       contextPercent,
       contextWindow,
-      autoCompactEnabled: ctx.settingsManager?.getCompactionSettings?.()?.enabled ?? true,
+      autoCompactEnabled: (ctx as ExtensionContextRuntimeCompat).settingsManager?.getCompactionSettings?.()?.enabled ?? true,
       customCompactionEnabled: customCompactionEnabled || extensionStatuses.has(CUSTOM_COMPACTION_STATUS_KEY),
       usingSubscription,
       sessionStartTime,
@@ -523,6 +530,8 @@ export default function footerExtension(pi: ExtensionAPI) {
   }
 
   function getResponsiveLayout(width: number, theme: Theme): { topContent: string; overflowContent: string } {
+    if (!currentCtx) return { topContent: "", overflowContent: "" };
+
     const now = Date.now();
     const cacheTtl = isStreaming ? STREAMING_LAYOUT_CACHE_TTL_MS : LAYOUT_CACHE_TTL_MS;
 
@@ -612,8 +621,9 @@ export default function footerExtension(pi: ExtensionAPI) {
     const settings = readSettings(ctx.cwd);
     config = parseFooterConfig(settings.footer, PRESET_NAMES);
 
-    getThinkingLevelFn = typeof ctx.getThinkingLevel === "function"
-      ? () => ctx.getThinkingLevel()
+    const runtimeCtx = ctx as ExtensionContextRuntimeCompat;
+    getThinkingLevelFn = typeof runtimeCtx.getThinkingLevel === "function"
+      ? () => runtimeCtx.getThinkingLevel?.() ?? "off"
       : null;
     currentThinkingLevel = getThinkingLevelFn?.() ?? null;
 
@@ -630,7 +640,7 @@ export default function footerExtension(pi: ExtensionAPI) {
     setGitCacheUpdateCallback(() => requestStatusRender());
   });
 
-  pi.on("session_shutdown", async (event) => {
+  pi.on("session_shutdown", async () => {
     setGitCacheUpdateCallback(null);
     statusRenderScheduler.cancel();
     restoreFooterStatusRepaintHook?.();
@@ -739,7 +749,7 @@ export default function footerExtension(pi: ExtensionAPI) {
   });
 
   // Track editor input timing for deferred layout
-  pi.on("editor_change", async () => {
+  (pi.on as unknown as (event: "editor_change", handler: () => Promise<void>) => void)("editor_change", async () => {
     lastEditorInputAt = Date.now();
   });
 
