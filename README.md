@@ -22,7 +22,7 @@ This plugin is a simplified take on [`nicobailon/pi-powerline-footer`](https://g
 ## Installation
 
 ```bash
-pi install git:github.com/smoosex/pi-footer
+pi install npm:@smoose/pi-footer
 ```
 
 ## Basic configuration

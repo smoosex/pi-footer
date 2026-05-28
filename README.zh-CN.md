@@ -22,7 +22,7 @@
 ## 安装
 
 ```bash
-pi install git:github.com/smoosex/pi-footer
+pi install npm:@smoose/pi-footer
 ```
 
 ## 基础配置
