@@ -1,7 +1,7 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 
-// Theme color - either a pi theme color name or a custom hex color
-export type ColorValue = ThemeColor | `#${string}`;
+// Theme color - either a pi theme color name, a custom hex color, or a special plugin color
+export type ColorValue = ThemeColor | `#${string}` | "rainbow";
 export type ThemeLike = Pick<Theme, "fg">;
 
 // Semantic color names for segments

@@ -466,7 +466,9 @@ function renderCustomSegment(id: `custom:${string}`, ctx: SegmentContext): Rende
   if (custom.prefix) {
     content = `${custom.prefix}${SEP_DOT}${content}`;
   }
-  if (custom.color) {
+  if (custom.color === "rainbow") {
+    content = rainbow(content);
+  } else if (custom.color) {
     content = applyColor(ctx.theme, custom.color, content);
   }
 
