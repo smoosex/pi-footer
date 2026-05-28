@@ -1,4 +1,5 @@
 import {
+  CustomEditor,
   type ExtensionAPI,
   type ExtensionContext,
   type ReadonlyFooterDataProvider,
@@ -53,6 +54,10 @@ const STREAMING_LAYOUT_CACHE_TTL_MS = 1000;
 const STATUS_RENDER_DEBOUNCE_MS = 33;
 const CONTEXT_STATUS_RENDER_MS = 250;
 const EDITOR_STATUS_DEFER_MS = 150;
+const EDITOR_OUTER_LEFT_MARGIN = 1;
+const EDITOR_OUTER_RIGHT_MARGIN = 1;
+const EDITOR_PROMPT = "> ";
+const EDITOR_PROMPT_WIDTH = visibleWidth(EDITOR_PROMPT);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Helpers
@@ -281,6 +286,46 @@ function computeResponsiveLayout(
     topContent: buildContentFromParts(topSegments, presetDef, ctx.theme, ctx.colors),
     secondaryContent: buildContentFromParts(secondarySegments, presetDef, ctx.theme, ctx.colors),
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Editor Chrome
+// ═══════════════════════════════════════════════════════════════════════════
+
+class PromptedEditor extends CustomEditor {
+  setPaddingX(_padding: number): void {
+    // Reserve just enough leading space for the one prompt marker. We strip this
+    // reserved space back out while rendering, so the editor itself has no extra
+    // internal padding beyond the prompt.
+    super.setPaddingX(EDITOR_PROMPT_WIDTH);
+  }
+
+  render(width: number): string[] {
+    const outerLeft = " ".repeat(EDITOR_OUTER_LEFT_MARGIN);
+    const outerRight = " ".repeat(EDITOR_OUTER_RIGHT_MARGIN);
+    const editorWidth = Math.max(1, width - EDITOR_OUTER_LEFT_MARGIN - EDITOR_OUTER_RIGHT_MARGIN);
+    const lines = super.render(editorWidth);
+    const reservedPromptSpace = " ".repeat(EDITOR_PROMPT_WIDTH);
+    let promptRendered = false;
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      // Editor text rows start with padding spaces. Stop at the bottom border so
+      // autocomplete rows keep their normal alignment under the input box.
+      if (!line.startsWith(" ")) break;
+      if (line.startsWith(reservedPromptSpace)) {
+        if (!promptRendered) {
+          lines[i] = EDITOR_PROMPT + line.slice(reservedPromptSpace.length);
+          promptRendered = true;
+        }
+      }
+    }
+
+    return lines.map((line) => {
+      const padding = " ".repeat(Math.max(0, editorWidth - visibleWidth(line)));
+      return `${outerLeft}${line}${padding}${outerRight}`;
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -573,6 +618,12 @@ export default function footerExtension(pi: ExtensionAPI) {
       ? () => ctx.getThinkingLevel()
       : null;
     currentThinkingLevel = getThinkingLevelFn?.() ?? null;
+
+    if (ctx.hasUI) {
+      ctx.ui.setEditorComponent((tui, editorTheme, keybindings) =>
+        new PromptedEditor(tui, editorTheme, keybindings)
+      );
+    }
 
     if (enabled && ctx.hasUI) {
       registerFooter(ctx);
