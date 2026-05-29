@@ -1,7 +1,5 @@
 # pi-footer
 
-[中文](./README.zh-CN.md) | English
-
 A compact footer/status bar extension for [pi](https://github.com/earendil-works/pi) coding agent.
 
 This plugin is a simplified take on [`nicobailon/pi-powerline-footer`](https://github.com/nicobailon/pi-powerline-footer), with a smaller configuration model plus a few extra features such as custom segment ordering, custom extension-status items, rainbow coloring, and a prompted input editor.

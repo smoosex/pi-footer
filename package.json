@@ -5,8 +5,8 @@
   "type": "module",
   "files": [
     "*.ts",
-    "*.md",
-    "*.json"
+    "README.md",
+    "package.json"
   ],
   "keywords": [
     "pi-package",
