@@ -1,6 +1,6 @@
 {
   "name": "@smoose/pi-footer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A compact footer/status bar extension for pi coding agent",
   "type": "module",
   "files": [
