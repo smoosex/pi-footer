@@ -188,11 +188,12 @@ const thinkingSegment: StatusLineSegment = {
       medium: "med",
       high: "high",
       xhigh: "xhigh",
+      max: "max",
     };
     const label = levelText[level] || level;
     const content = `think:${label}`;
 
-    if (level === "high" || level === "xhigh") {
+    if (level === "high" || level === "xhigh" || level === "max") {
       return { content: rainbow(content), visible: true };
     }
 
