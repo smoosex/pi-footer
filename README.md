@@ -123,6 +123,7 @@ Supported built-in segment ids:
 | `cache_read` | Cache read tokens |
 | `cache_write` | Cache write tokens |
 | `cache_hit` | Latest turn cache hit rate, e.g. `cache 87.3%` |
+| `cache_hit_total` | Session-wide cache hit rate |
 | `extension_statuses` | Remaining extension statuses not lifted into custom items |
 
 ## Custom items

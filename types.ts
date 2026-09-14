@@ -46,6 +46,7 @@ export type BuiltinStatusLineSegmentId =
   | "cache_read"
   | "cache_write"
   | "cache_hit"
+  | "cache_hit_total"
   | "thinking"
   | "extension_statuses";
 

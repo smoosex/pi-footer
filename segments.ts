@@ -398,15 +398,32 @@ const cacheWriteSegment: StatusLineSegment = {
   },
 };
 
+function formatHitRate(ctx: SegmentContext, rate: number): string {
+  const icons = getIcons();
+  const content = withIcon(icons.cache, `${rate.toFixed(1)}%`);
+  return color(ctx, "tokens", content);
+}
+
 const cacheHitSegment: StatusLineSegment = {
   id: "cache_hit",
   render(ctx) {
-    const icons = getIcons();
     const rate = ctx.latestCacheHitRate;
     if (rate === null) return { content: "", visible: false };
 
-    const content = withIcon(icons.cache, `${rate.toFixed(1)}%`);
-    return { content: color(ctx, "tokens", content), visible: true };
+    return { content: formatHitRate(ctx, rate), visible: true };
+  },
+};
+
+const cacheHitTotalSegment: StatusLineSegment = {
+  id: "cache_hit_total",
+  render(ctx) {
+    const { input, cacheRead, cacheWrite } = ctx.usageStats;
+    const promptTokens = input + cacheRead + cacheWrite;
+    if (promptTokens <= 0 || (cacheRead <= 0 && cacheWrite <= 0)) {
+      return { content: "", visible: false };
+    }
+
+    return { content: formatHitRate(ctx, (cacheRead / promptTokens) * 100), visible: true };
   },
 };
 
@@ -461,6 +478,7 @@ export const SEGMENTS: Record<BuiltinStatusLineSegmentId, StatusLineSegment> = {
   cache_read: cacheReadSegment,
   cache_write: cacheWriteSegment,
   cache_hit: cacheHitSegment,
+  cache_hit_total: cacheHitTotalSegment,
   extension_statuses: extensionStatusesSegment,
 };
 
