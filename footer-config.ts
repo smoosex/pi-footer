@@ -32,6 +32,7 @@ const BUILTIN_SEGMENT_IDS: readonly BuiltinStatusLineSegmentId[] = [
   "hostname",
   "cache_read",
   "cache_write",
+  "cache_hit",
   "thinking",
   "extension_statuses",
 ];

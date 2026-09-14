@@ -122,6 +122,7 @@ Supported built-in segment ids:
 | `hostname` | Hostname |
 | `cache_read` | Cache read tokens |
 | `cache_write` | Cache write tokens |
+| `cache_hit` | Latest turn cache hit rate, e.g. `cache 87.3%` |
 | `extension_statuses` | Remaining extension statuses not lifted into custom items |
 
 ## Custom items

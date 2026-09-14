@@ -485,6 +485,11 @@ export default function footerExtension(pi: ExtensionAPI) {
     }
 
     const latestUsage = isStreaming ? liveAssistantUsage ?? lastAssistant?.usage : lastAssistant?.usage;
+    const latestPromptTokens = latestUsage ? latestUsage.input + latestUsage.cacheRead + latestUsage.cacheWrite : 0;
+    const latestCacheHitRate =
+      latestUsage && latestPromptTokens > 0 && (latestUsage.cacheRead > 0 || latestUsage.cacheWrite > 0)
+        ? (latestUsage.cacheRead / latestPromptTokens) * 100
+        : null;
     const coreContextUsage = isStreaming && liveAssistantUsage ? null : readCoreContextUsage(ctx);
     const contextTokens = coreContextUsage?.contextTokens ?? (latestUsage ? getUsageTokenTotal(latestUsage) : 0);
     const contextWindow = coreContextUsage?.contextWindow ?? ctx.model?.contextWindow ?? 0;
@@ -508,6 +513,7 @@ export default function footerExtension(pi: ExtensionAPI) {
       sessionId: ctx.sessionManager?.getSessionId?.(),
       cwd: ctx.cwd,
       usageStats: { input, output, cacheRead, cacheWrite, cost },
+      latestCacheHitRate,
       contextPercent,
       contextWindow,
       autoCompactEnabled: (ctx as ExtensionContextRuntimeCompat).settingsManager?.getCompactionSettings?.()?.enabled ?? true,
